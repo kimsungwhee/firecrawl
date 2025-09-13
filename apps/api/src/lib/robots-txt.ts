@@ -9,7 +9,7 @@ const useFireEngine =
   process.env.FIRE_ENGINE_BETA_URL !== "" &&
   process.env.FIRE_ENGINE_BETA_URL !== undefined;
 
-export interface RobotsTxtChecker {
+interface RobotsTxtChecker {
   robotsTxtUrl: string;
   robotsTxt: string;
   robots: Robot;
@@ -56,6 +56,7 @@ export async function fetchRobotsTxt(
     robotsTxtUrl,
     scrapeOptions.parse({
       formats: ["rawHtml"],
+      timeout: 5000,
       ...(location ? { location } : {}),
     }),
     {

@@ -4,7 +4,7 @@ import {
   checkTeamCredits,
 } from "../../services/billing/credit_billing";
 import { authenticateUser } from "../auth";
-import { RateLimiterMode } from "../../types";
+import { RateLimiterMode, ScrapeJobSingleUrls } from "../../types";
 import { logJob } from "../../services/logging/log_job";
 import { PageOptions, SearchOptions } from "../../lib/entities";
 import { search } from "../../search";
@@ -23,8 +23,9 @@ import {
 import { fromV0Combo } from "../v2/types";
 import { ScrapeJobTimeoutError } from "../../lib/error";
 import { scrapeQueue } from "../../services/worker/nuq";
+import { defaultOrigin } from "../../lib/default-values";
 
-export async function searchHelper(
+async function searchHelper(
   jobId: string,
   req: Request,
   team_id: string,
@@ -117,7 +118,8 @@ export async function searchHelper(
         startTime: Date.now(),
         zeroDataRetention: false, // not supported on v0
         apiKeyId: api_key_id,
-      },
+        origin: req.body.origin ?? defaultOrigin,
+      } satisfies ScrapeJobSingleUrls,
     };
   });
 

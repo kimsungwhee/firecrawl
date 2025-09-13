@@ -189,7 +189,7 @@ export async function getDoneJobsOrderedUntil(
   );
 }
 
-export async function isCrawlFinished(id: string) {
+async function isCrawlFinished(id: string) {
   await redisEvictConnection.expire(
     "crawl:" + id + ":kickoff:finish",
     24 * 60 * 60,
@@ -197,7 +197,7 @@ export async function isCrawlFinished(id: string) {
   return (
     (await redisEvictConnection.scard("crawl:" + id + ":jobs_done")) ===
       (await redisEvictConnection.scard("crawl:" + id + ":jobs")) &&
-    (await redisEvictConnection.get("crawl:" + id + ":kickoff:finish")) !== null
+    (await isCrawlKickoffFinished(id))
   );
 }
 
@@ -207,12 +207,11 @@ export async function isCrawlKickoffFinished(id: string) {
     24 * 60 * 60,
   );
   return (
-    (await redisEvictConnection.get("crawl:" + id + ":kickoff:finish")) !== null
+    (await redisEvictConnection.get("crawl:" + id + ":kickoff:finish")) !==
+      null &&
+    (await redisEvictConnection.scard("crawl:" + id + ":sitemap_jobs_done")) ===
+      (await redisEvictConnection.scard("crawl:" + id + ":sitemap_jobs"))
   );
-}
-
-export async function isCrawlFinishedLocked(id: string) {
-  return await redisEvictConnection.exists("crawl:" + id + ":finish");
 }
 
 export async function finishCrawlKickoff(id: string) {
@@ -277,10 +276,6 @@ export async function finishCrawl(id: string, __logger: Logger = _logger) {
 
 export async function getCrawlJobs(id: string): Promise<string[]> {
   return await redisEvictConnection.smembers("crawl:" + id + ":jobs");
-}
-
-export async function getCrawlJobCount(id: string): Promise<number> {
-  return await redisEvictConnection.scard("crawl:" + id + ":jobs");
 }
 
 export async function getCrawlQualifiedJobCount(id: string): Promise<number> {

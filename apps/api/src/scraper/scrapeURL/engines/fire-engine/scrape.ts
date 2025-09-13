@@ -17,6 +17,7 @@ import {
   UnsupportedFileError,
 } from "../../error";
 import { Meta } from "../..";
+import { abTestFireEngine } from "../../../../services/ab-test";
 
 export type FireEngineScrapeRequestCommon = {
   url: string;
@@ -152,7 +153,7 @@ const successSchema = z.object({
   usedMobileProxy: z.boolean().optional(),
 });
 
-export type FireEngineCheckStatusSuccess = z.infer<typeof successSchema>;
+type FireEngineCheckStatusSuccess = z.infer<typeof successSchema>;
 
 const processingSchema = z.object({
   jobId: z.string(),
@@ -160,9 +161,6 @@ const processingSchema = z.object({
 });
 
 const failedSchema = z.object({
-  jobId: z.string(),
-  state: z.literal("failed"),
-  processing: z.literal(false),
   error: z.string(),
 });
 
@@ -184,6 +182,8 @@ export async function fireEngineScrape<
   abort?: AbortSignal,
   production = true,
 ): Promise<z.infer<typeof processingSchema> | FireEngineCheckStatusSuccess> {
+  abTestFireEngine(request);
+
   let status = await robustFetch({
     url: `${production ? fireEngineURL : fireEngineStagingURL}/scrape`,
     method: "POST",
@@ -217,7 +217,6 @@ export async function fireEngineScrape<
   } else if (failedParse.success) {
     logger.debug("Scrape job failed", {
       status,
-      jobId: failedParse.data.jobId,
     });
     if (
       typeof status.error === "string" &&
@@ -254,7 +253,6 @@ export async function fireEngineScrape<
     ) {
       logger.warn("CDP timed out while loading the page", {
         status,
-        jobId: failedParse.data.jobId,
       });
       throw new FEPageLoadFailed();
     } else if (
@@ -273,7 +271,6 @@ export async function fireEngineScrape<
       throw new EngineError("Scrape job failed", {
         cause: {
           status,
-          jobId: failedParse.data.jobId,
         },
       });
     }

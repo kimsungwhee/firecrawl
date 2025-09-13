@@ -20,6 +20,7 @@ import { getJobs, PseudoJob } from "./crawl-status";
 import * as Sentry from "@sentry/node";
 import { getConcurrencyLimitedJobs } from "../../lib/concurrency-limit";
 import { scrapeQueue, NuQJobStatus } from "../../services/worker/nuq";
+import { getErrorContactMessage } from "../../lib/deployment";
 
 type ErrorMessage = {
   type: "error";
@@ -91,7 +92,10 @@ async function crawlStatusWS(
       ])
     ).map(x => x.id);
 
-    const newlyDoneJobs: PseudoJob<any>[] = await getJobs(newlyDoneJobIDs);
+    const newlyDoneJobs: PseudoJob<any>[] = await getJobs(
+      newlyDoneJobIDs,
+      logger,
+    );
 
     for (const job of newlyDoneJobs) {
       if (job.returnvalue) {
@@ -144,7 +148,7 @@ async function crawlStatusWS(
 
   jobIDs = validJobIDs; // Use validJobIDs instead of jobIDs for further processing
 
-  const doneJobs = await getJobs(doneJobIDs);
+  const doneJobs = await getJobs(doneJobIDs, logger);
   const data = doneJobs.map(x => x.returnvalue);
 
   await send(ws, {
@@ -211,9 +215,7 @@ export async function crawlStatusWSController(
     );
     return close(ws, 1011, {
       type: "error",
-      error:
-        "An unexpected error occurred. Please contact help@firecrawl.com for help. Your exception ID is " +
-        id,
+      error: getErrorContactMessage(id),
     });
   }
 }

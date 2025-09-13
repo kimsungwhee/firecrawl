@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export enum IntegrationEnum {
+enum IntegrationEnum {
   DIFY = "dify",
   ZAPIER = "zapier",
   PIPEDREAM = "pipedream",
@@ -14,6 +14,7 @@ export enum IntegrationEnum {
   FLOWISE = "flowise",
   METAGPT = "metagpt",
   RELEVANCEAI = "relevanceai",
+  VIASOCKET = "viasocket",
 }
 
 export const integrationSchema = z
